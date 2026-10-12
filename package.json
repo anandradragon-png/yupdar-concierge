@@ -1,0 +1,16 @@
+{
+  "name": "yupdar-concierge",
+  "version": "0.1.0",
+  "description": "AI concierge for YupDar: explains your Gift, recommends a reading and sells it with PayPal — in one conversation. Nemotron on Nebius Token Factory.",
+  "license": "MIT",
+  "private": false,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test \"test/**/*.test.js\""
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
