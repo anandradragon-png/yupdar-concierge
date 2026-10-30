@@ -48,7 +48,7 @@ async function callCore(action, payload, fetchImpl) {
 }
 
 const profile  = (birth_date, f)        => callCore('profile',  { birth_date }, f);
-const checkout = (email, kind, key, f)  => callCore('checkout', { email, kind, key }, f);
+const checkout = (email, kind, key, birth_date, f) => callCore('checkout', { email, kind, key, birth_date }, f);
 const status   = (email, f)             => callCore('status',   { email }, f);
 
 module.exports = { isConfigured, callCore, profile, checkout, status };

@@ -42,14 +42,14 @@ describe('core-client', () => {
     process.env.CORE_API_URL = 'https://core.test/api/concierge';
     process.env.CORE_API_KEY = 'k-1';
     let seen = null;
-    const r = await core.checkout('a@b.co', 'plan', 'guardian_1m', async (url, opts) => {
+    const r = await core.checkout('a@b.co', 'plan', 'guardian_1m', '10.09.1977', async (url, opts) => {
       seen = { url, headers: opts.headers, body: JSON.parse(opts.body) };
       return jsonResp(200, { approve_url: 'https://paypal/approve', order_id: 'O1' });
     });
     assert.strictEqual(r.ok, true);
     assert.strictEqual(seen.url, 'https://core.test/api/concierge');
     assert.strictEqual(seen.headers.Authorization, 'Bearer k-1');
-    assert.deepStrictEqual(seen.body, { action: 'checkout', email: 'a@b.co', kind: 'plan', key: 'guardian_1m' });
+    assert.deepStrictEqual(seen.body, { action: 'checkout', email: 'a@b.co', kind: 'plan', key: 'guardian_1m', birth_date: '10.09.1977' });
     assert.strictEqual(r.data.order_id, 'O1');
   });
 

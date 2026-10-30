@@ -73,6 +73,7 @@ async function start(req, res) {
   const r = await core.profile(birth_date);
   if (!r.ok) return res.status(r.status).json({ error: r.error });
   const s = sessions.create({ profile: r.data, email: clean, messages: seedHistory(history) });
+  s.birth_date = String(birth_date || '').trim();
   const p = r.data;
   return res.json({
     session: s.id,
@@ -107,7 +108,8 @@ async function checkout(req, res) {
   if (!s) return res.status(410).json({ error: 'Session expired. Start again.' });
   const rec = { kind: req.body.kind, key: req.body.key };
   if (!catalogHas(s.profile.catalog, rec)) return res.status(400).json({ error: 'Unknown product.' });
-  const r = await core.checkout(s.email, rec.kind, rec.key);
+  // The date goes along so the account opens in the app with the person's Gift.
+  const r = await core.checkout(s.email, rec.kind, rec.key, s.birth_date);
   if (!r.ok) return res.status(r.status).json({ error: r.error });
   return res.json(r.data);
 }
