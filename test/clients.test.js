@@ -1,6 +1,6 @@
 /**
  * The two network clients, without a network: the core gets the bearer key
- * and the action; Nebius gets an OpenAI-shaped body and falls back to the
+ * and the action; the model client sends an OpenAI-shaped body and falls back to the
  * second model when the first one fails. The system prompt lists every
  * catalog item with its exact price.
  */
@@ -11,12 +11,12 @@ const { test, describe, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert');
 
 const core = require('../src/core-client');
-const nebius = require('../src/nebius-client');
+const llm = require('../src/llm-client');
 const { buildSystemPrompt } = require('../src/system-prompt');
 
 const saved = {};
 beforeEach(() => {
-  for (const k of ['CORE_API_URL', 'CORE_API_KEY', 'NEBIUS_API_KEY', 'NEBIUS_MODEL', 'NEBIUS_MODEL_FALLBACK']) {
+  for (const k of ['CORE_API_URL', 'CORE_API_KEY', 'LLM_API_KEY', 'LLM_API_URL', 'LLM_MODEL', 'LLM_MODEL_FALLBACK']) {
     saved[k] = process.env[k];
     delete process.env[k];
   }
@@ -69,37 +69,42 @@ describe('core-client', () => {
   });
 });
 
-describe('nebius-client', () => {
+describe('llm-client', () => {
   test('without a key → throws before any network call', async () => {
+    delete process.env.LLM_API_KEY;
     let called = false;
-    await assert.rejects(() => nebius.chat({ messages: [], fetchImpl: async () => { called = true; } }), /NEBIUS_API_KEY/);
+    await assert.rejects(() => llm.chat({ messages: [], fetchImpl: async () => { called = true; } }), /LLM_API_KEY/);
     assert.strictEqual(called, false);
   });
 
-  test('OpenAI-shaped body, JSON mode, bearer header', async () => {
-    process.env.NEBIUS_API_KEY = 'nb';
+  test('OpenAI-shaped body, JSON mode, bearer header; DeepSeek by default', async () => {
+    process.env.LLM_API_KEY = 'k1';
+    delete process.env.LLM_API_URL; delete process.env.LLM_MODEL; delete process.env.LLM_MODEL_FALLBACK;
     let seen = null;
-    const out = await nebius.chat({
+    const out = await llm.chat({
       messages: [{ role: 'user', content: 'hi' }],
       fetchImpl: async (url, opts) => {
         seen = { url, headers: opts.headers, body: JSON.parse(opts.body) };
         return jsonResp(200, { choices: [{ message: { content: '{"reply":"hello","recommend":null}' } }], usage: { total_tokens: 5 } });
       }
     });
-    assert.match(seen.url, /tokenfactory\.nebius\.com/);
-    assert.strictEqual(seen.headers.Authorization, 'Bearer nb');
-    assert.strictEqual(seen.body.model, 'nvidia/nemotron-3-super-120b-a12b');
+    assert.match(seen.url, /api\.deepseek\.com/);
+    assert.strictEqual(seen.headers.Authorization, 'Bearer k1');
+    assert.strictEqual(seen.body.model, 'deepseek-chat');
     assert.deepStrictEqual(seen.body.response_format, { type: 'json_object' });
     assert.strictEqual(out.content, '{"reply":"hello","recommend":null}');
-    assert.strictEqual(out.model, 'nvidia/nemotron-3-super-120b-a12b');
   });
 
-  test('primary fails → fallback model answers', async () => {
-    process.env.NEBIUS_API_KEY = 'nb';
+  test('another provider by env: URL and models come from LLM_*', async () => {
+    process.env.LLM_API_KEY = 'k2';
+    process.env.LLM_API_URL = 'https://api.tokenfactory.nebius.com/v1/chat/completions';
+    process.env.LLM_MODEL = 'nvidia/nemotron-3-super-120b-a12b';
+    process.env.LLM_MODEL_FALLBACK = 'nvidia/nvidia-nemotron-3-nano-30b-a3b';
     const models = [];
-    const out = await nebius.chat({
+    const out = await llm.chat({
       messages: [],
       fetchImpl: async (url, opts) => {
+        assert.match(url, /tokenfactory\.nebius\.com/);
         const m = JSON.parse(opts.body).model;
         models.push(m);
         if (m.includes('super')) return jsonResp(503, { error: 'busy' });
@@ -110,9 +115,12 @@ describe('nebius-client', () => {
     assert.strictEqual(out.model, 'nvidia/nvidia-nemotron-3-nano-30b-a3b');
   });
 
-  test('both fail → throws', async () => {
-    process.env.NEBIUS_API_KEY = 'nb';
-    await assert.rejects(() => nebius.chat({ messages: [], fetchImpl: async () => jsonResp(500, {}) }), /Nebius HTTP 500/);
+  test('no fallback configured → the first failure throws, no second call', async () => {
+    process.env.LLM_API_KEY = 'k3';
+    delete process.env.LLM_API_URL; delete process.env.LLM_MODEL; delete process.env.LLM_MODEL_FALLBACK;
+    let calls = 0;
+    await assert.rejects(() => llm.chat({ messages: [], fetchImpl: async () => { calls++; return jsonResp(500, {}); } }), /LLM HTTP 500/);
+    assert.strictEqual(calls, 1);
   });
 });
 

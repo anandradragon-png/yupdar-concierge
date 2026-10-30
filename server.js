@@ -1,7 +1,7 @@
 /**
  * YupDar Concierge — a small Express server: one static page and four JSON
  * handlers (`src/routes.js`). Talks to the YupDar core over HTTPS and to
- * Nemotron on Nebius Token Factory. Nothing else.
+ * an OpenAI-compatible language model (DeepSeek by default). Nothing else.
  */
 
 'use strict';

@@ -14,7 +14,7 @@
 'use strict';
 
 const core = require('./core-client');
-const nebius = require('./nebius-client');
+const llm = require('./llm-client');
 const sessions = require('./sessions');
 const { buildSystemPrompt } = require('./system-prompt');
 
@@ -69,13 +69,13 @@ async function chat(req, res) {
   if (!s) return res.status(410).json({ error: 'Session expired. Start again.' });
   const message = String((req.body && req.body.message) || '').trim();
   if (!message) return res.status(400).json({ error: 'Empty message.' });
-  if (!nebius.isConfigured()) return res.status(503).json({ error: 'AI is not configured (NEBIUS_API_KEY).' });
+  if (!llm.isConfigured()) return res.status(503).json({ error: 'AI is not configured (LLM_API_KEY).' });
 
   sessions.push(s, 'user', message);
   const messages = [{ role: 'system', content: buildSystemPrompt(s.profile) }, ...s.messages];
   let out;
   try {
-    out = await nebius.chat({ messages });
+    out = await llm.chat({ messages });
   } catch (e) {
     s.messages.pop();
     return res.status(502).json({ error: 'The model did not answer: ' + e.message });
