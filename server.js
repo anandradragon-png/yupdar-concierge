@@ -9,6 +9,7 @@
 const path = require('path');
 const express = require('express');
 const routes = require('./src/routes');
+const { limit } = require('./src/rate-limit');
 
 function buildApp() {
   const app = express();
@@ -19,10 +20,11 @@ function buildApp() {
     console.error('[concierge]', e.message);
     if (!res.headersSent) res.status(500).json({ error: 'internal' });
   });
-  app.post('/api/start', wrap(routes.start));
-  app.post('/api/chat', wrap(routes.chat));
-  app.post('/api/checkout', wrap(routes.checkout));
-  app.post('/api/status', wrap(routes.status));
+  // Per visitor: a person starts a few times, chats at reading speed, pays once or twice.
+  app.post('/api/start', limit('start', 10, 60000), wrap(routes.start));
+  app.post('/api/chat', limit('chat', 20, 60000), wrap(routes.chat));
+  app.post('/api/checkout', limit('checkout', 10, 60000), wrap(routes.checkout));
+  app.post('/api/status', limit('status', 30, 60000), wrap(routes.status));
   app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
   app.use(express.static(path.join(__dirname, 'public'), { maxAge: 0 }));
