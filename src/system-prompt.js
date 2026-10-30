@@ -7,7 +7,11 @@
  * recommend keys that exist in the catalog it was given.
  *
  * Output is strict JSON so the UI can draw a payment button without parsing
- * prose:  { "reply": string, "recommend": { "kind", "key" } | null }
+ * prose:  { "reply": string, "recommend": { "kind", "key" } | null, "declined": boolean }
+ *
+ * A "no" is respected: the model sets `declined`, stops selling in this
+ * conversation and points to the free tier instead — the page then hides the
+ * pay button and shows "Open YupDar free".
  */
 
 'use strict';
@@ -23,6 +27,12 @@ function catalogLines(catalog) {
     lines.push(`- kind=addon key=${a.key} — ${a.name}: ${a.description} (${a.duration}). Price $${a.usd}.`);
   }
   return lines.join('\n');
+}
+
+function freeLines(catalog) {
+  const f = catalog.free;
+  if (!f) return '- (no free tier information)';
+  return `- ${f.name} (free, forever, no payment): ${f.description} Includes: ${f.features.join('; ')}.`;
 }
 
 function buildSystemPrompt(profile) {
@@ -49,9 +59,13 @@ RULES
 - Do not diagnose, predict the future, or give medical/financial advice.
 - "recommend" is null until you are confident the product answers a need the person expressed. Only one product at a time. Use the exact kind and key from the catalog.
 - If the person says they already paid or asks what they got, tell them to press "Check my access".
+- If the person declines, hesitates about money, or says "not now": respect it warmly, never argue or repeat the offer, set "declined": true and "recommend": null, and tell them YupDar is free to start (the free tier below) — they can come back any time. After a decline, do not recommend anything again in this conversation unless the person themselves asks to buy or asks what is paid.
+
+FREE (not a product — never put it in "recommend"; mention it when the person is not ready to pay)
+${freeLines(profile.catalog)}
 
 OUTPUT FORMAT — strict JSON, nothing else:
-{"reply": "<your message>", "recommend": {"kind": "book|plan|addon", "key": "<catalog key>"} | null}`;
+{"reply": "<your message>", "recommend": {"kind": "book|plan|addon", "key": "<catalog key>"} | null, "declined": true | false}`;
 }
 
-module.exports = { buildSystemPrompt, catalogLines };
+module.exports = { buildSystemPrompt, catalogLines, freeLines };

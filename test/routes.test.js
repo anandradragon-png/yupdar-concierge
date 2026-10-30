@@ -100,3 +100,42 @@ describe('seedHistory — the conversation the page brings back', () => {
     assert.strictEqual(out[11].role, 'assistant');
   });
 });
+
+describe('parseReply — a "no" is respected', () => {
+  test('declined → no recommendation even if the model also sent one', () => {
+    const r = parseReply('{"reply":"No problem.","recommend":{"kind":"book","key":"book"},"declined":true}', catalog);
+    assert.strictEqual(r.declined, true);
+    assert.strictEqual(r.recommend, null, 'a pay button after "no" is pressure, not help');
+  });
+
+  test('no flag → declined false, recommendation as usual', () => {
+    const r = parseReply('{"reply":"The Book.","recommend":{"kind":"book","key":"book"}}', catalog);
+    assert.strictEqual(r.declined, false);
+    assert.deepStrictEqual(r.recommend, { kind: 'book', key: 'book', usd: 8.76 });
+  });
+
+  test('"declined":"yes" (not a boolean) does not count as a refusal', () => {
+    const r = parseReply('{"reply":"ok","recommend":null,"declined":"yes"}', catalog);
+    assert.strictEqual(r.declined, false);
+  });
+});
+
+describe('system prompt — free path', () => {
+  const { buildSystemPrompt, freeLines } = require('../src/system-prompt');
+  test('the free tier is named, marked as not a product, with its features', () => {
+    const txt = freeLines({ free: { name: 'Wanderer', description: 'Free forever.', features: ['Your Gift', 'Daily Insight'] } });
+    assert.match(txt, /Wanderer \(free, forever, no payment\)/);
+    assert.match(txt, /Daily Insight/);
+  });
+  test('the rule for "no" is in the prompt', () => {
+    const full = {
+      book: { ...catalog.book, description: 'All chapters.' },
+      plans: catalog.plans.map(x => ({ ...x, name: x.key, description: 'd', features: ['f'] })),
+      addons: catalog.addons.map(x => ({ ...x, name: x.key, description: 'd', duration: '7 days' })),
+      free: null
+    };
+    const p = buildSystemPrompt({ dar_code: '1-6-7', catalog: full });
+    assert.match(p, /set "declined": true/);
+    assert.match(p, /never put it in "recommend"/);
+  });
+});

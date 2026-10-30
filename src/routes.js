@@ -43,10 +43,12 @@ function parseReply(text, catalog) {
     const m = raw.match(/\{[\s\S]*\}/);
     if (m) { try { obj = JSON.parse(m[0]); } catch { obj = null; } }
   }
-  if (!obj || typeof obj.reply !== 'string') return { reply: raw || '…', recommend: null };
-  const rec = catalogHas(catalog, obj.recommend) ? { kind: obj.recommend.kind, key: obj.recommend.key } : null;
+  if (!obj || typeof obj.reply !== 'string') return { reply: raw || '…', recommend: null, declined: false };
+  const declined = obj.declined === true;
+  // A "no" wins over a recommendation in the same answer: no pay button after a refusal.
+  const rec = !declined && catalogHas(catalog, obj.recommend) ? { kind: obj.recommend.kind, key: obj.recommend.key } : null;
   if (rec) rec.usd = priceOf(catalog, rec);
-  return { reply: obj.reply.trim(), recommend: rec };
+  return { reply: obj.reply.trim(), recommend: rec, declined };
 }
 
 /**
@@ -67,10 +69,10 @@ function seedHistory(history) {
 }
 
 async function start(req, res) {
-  const { birth_date, email, history } = req.body || {};
+  const { birth_date, email, history, save } = req.body || {};
   const clean = String(email || '').trim().toLowerCase();
   if (!EMAIL_RE.test(clean)) return res.status(400).json({ error: 'A valid email is needed to unlock what you buy.' });
-  const r = await core.profile(birth_date);
+  const r = await core.profile(birth_date, undefined, { save: save === true, email: clean });
   if (!r.ok) return res.status(r.status).json({ error: r.error });
   const s = sessions.create({ profile: r.data, email: clean, messages: seedHistory(history) });
   s.birth_date = String(birth_date || '').trim();
@@ -78,7 +80,8 @@ async function start(req, res) {
   return res.json({
     session: s.id,
     gift: { code: p.dar_code, name: p.name_en || p.name_ru, metaphor: p.archetype_en || p.metaphor_ru, essence: p.essence_en || p.essence_short_ru },
-    catalog: p.catalog
+    catalog: p.catalog,
+    saved: p.saved === true
   });
 }
 
@@ -99,8 +102,8 @@ async function chat(req, res) {
     return res.status(502).json({ error: 'The model did not answer: ' + e.message });
   }
   const parsed = parseReply(out.content, s.profile.catalog);
-  sessions.push(s, 'assistant', JSON.stringify({ reply: parsed.reply, recommend: parsed.recommend && { kind: parsed.recommend.kind, key: parsed.recommend.key } }));
-  return res.json({ reply: parsed.reply, recommend: parsed.recommend, model: out.model });
+  sessions.push(s, 'assistant', JSON.stringify({ reply: parsed.reply, recommend: parsed.recommend && { kind: parsed.recommend.kind, key: parsed.recommend.key }, declined: parsed.declined }));
+  return res.json({ reply: parsed.reply, recommend: parsed.recommend, declined: parsed.declined, model: out.model });
 }
 
 async function checkout(req, res) {

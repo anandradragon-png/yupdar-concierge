@@ -47,7 +47,8 @@ async function callCore(action, payload, fetchImpl) {
   return { ok: true, data };
 }
 
-const profile  = (birth_date, f)        => callCore('profile',  { birth_date }, f);
+// `save` — the person ticked «save my Gift»: the core keeps their Gift under that email.
+const profile  = (birth_date, f, opts)  => callCore('profile',  Object.assign({ birth_date }, opts && opts.save ? { email: opts.email, save: true } : {}), f);
 const checkout = (email, kind, key, birth_date, f) => callCore('checkout', { email, kind, key, birth_date }, f);
 const status   = (email, f)             => callCore('status',   { email }, f);
 

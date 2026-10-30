@@ -5,7 +5,7 @@
   'use strict';
 
   const $ = (sel) => document.querySelector(sel);
-  const state = { session: null, catalog: null, offer: null, busy: false, birth: '', email: '', history: [], paying: null, unlocked: null };
+  const state = { session: null, catalog: null, offer: null, busy: false, birth: '', email: '', history: [], paying: null, unlocked: null, declined: false, saved: false, save: false };
 
   // ---- the person's own conversation, kept in their browser ----
   // The server forgets sessions on restart. Without this the person would type
@@ -15,7 +15,7 @@
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify({
         birth: state.birth, email: state.email, history: state.history.slice(-24), offer: state.offer,
-        paying: state.paying, unlocked: state.unlocked
+        paying: state.paying, unlocked: state.unlocked, declined: state.declined, saved: state.saved
       }));
     } catch { /* private mode: works, just does not remember */ }
   }
@@ -80,9 +80,10 @@
 
   /** New server session for the same person, carrying the conversation so far. */
   async function openSession() {
-    const data = await post('api/start', { birth_date: state.birth, email: state.email, history: state.history });
+    const data = await post('api/start', { birth_date: state.birth, email: state.email, history: state.history, save: state.save });
     state.session = data.session;
     state.catalog = data.catalog;
+    if (data.saved) { state.saved = true; state.save = false; } // saved once — no need to send again
     return data;
   }
 
@@ -119,6 +120,7 @@
     try {
       state.birth = String(fd.get('birth_date') || '');
       state.email = String(fd.get('email') || '');
+      state.save = fd.get('save') === '1';
       state.history = [];
       const data = await openSession();
       showGift(data.gift);
@@ -144,7 +146,9 @@
       showGift(data.gift);
       for (const m of state.history) addMessage(m.role === 'user' ? 'user' : 'bot', m.content);
       state.paying = saved.paying || null;
+      state.saved = !!saved.saved;
       if (saved.unlocked) showUnlocked(saved.unlocked);
+      else if (saved.declined) showFree();
       else if (saved.offer) showOffer(saved.offer);
       // Back from PayPal (`?paid=1` from the return page): confirm right away —
       // the person should not have to find and press a button to see the result.
@@ -173,7 +177,8 @@
       thinking.remove();
       addMessage('bot', data.reply);
       state.history.push({ role: 'user', content: text }, { role: 'assistant', content: data.reply });
-      if (data.recommend) showOffer(data.recommend);
+      if (data.declined) showFree();
+      else if (data.recommend) { state.declined = false; $('#free').hidden = true; showOffer(data.recommend); }
       save();
     } catch (err) {
       thinking.remove();
@@ -209,6 +214,17 @@
       state.busy = false;
     }
   });
+
+  // ---- "not now": the pay button goes away, the free app is one click ----
+  function showFree() {
+    state.declined = true;
+    showOffer(null);
+    $('#free-note').textContent = state.saved
+      ? 'Your Gift is already saved to ' + state.email + ' — sign in with it. The daily insight, the Gift diary and a preview of the Book are free, forever.'
+      : 'Your Gift, the daily insight, the Gift diary and a preview of the Book — free, forever. Enter the same birth date there.';
+    $('#free').hidden = false;
+    $('#free-link').hidden = true;
+  }
 
   // ---- after payment: what was bought, opened in one click ----
   function showUnlocked(rec) {

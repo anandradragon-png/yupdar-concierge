@@ -92,6 +92,9 @@ input::placeholder { color: var(--quiet); }
 /* `display: grid` above beats the browser's own [hidden] rule — without this
    the pay button showed before any recommendation and an empty panel after. */
 [hidden] { display: none !important; }
+.consent { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; color: var(--muted, #a09080); }
+.consent input { margin-top: 3px; accent-color: #D4AF37; }
+.tools { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
 a.btn { display: block; text-align: center; text-decoration: none; }
 
 .composer { display: flex; gap: 8px; margin-top: 16px; }
