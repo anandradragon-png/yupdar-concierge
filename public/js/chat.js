@@ -216,7 +216,7 @@
     showOffer(null);
     const name = productLabel(rec);
     $('#unlocked .offer-text').textContent = name + ' — unlocked';
-    $('#open-product').textContent = 'Open my ' + name;
+    $('#open-product').textContent = 'Open my ' + name.replace(/^the\s+/i, '');
     $('#unlocked-email').textContent = state.email;
     $('#unlocked').hidden = false;
   }
