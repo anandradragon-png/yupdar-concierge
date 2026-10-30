@@ -5,7 +5,7 @@
   'use strict';
 
   const $ = (sel) => document.querySelector(sel);
-  const state = { session: null, catalog: null, offer: null, busy: false, birth: '', email: '', history: [] };
+  const state = { session: null, catalog: null, offer: null, busy: false, birth: '', email: '', history: [], paying: null, unlocked: null };
 
   // ---- the person's own conversation, kept in their browser ----
   // The server forgets sessions on restart. Without this the person would type
@@ -14,7 +14,8 @@
   function save() {
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify({
-        birth: state.birth, email: state.email, history: state.history.slice(-24), offer: state.offer
+        birth: state.birth, email: state.email, history: state.history.slice(-24), offer: state.offer,
+        paying: state.paying, unlocked: state.unlocked
       }));
     } catch { /* private mode: works, just does not remember */ }
   }
@@ -142,7 +143,14 @@
       const data = await openSession();
       showGift(data.gift);
       for (const m of state.history) addMessage(m.role === 'user' ? 'user' : 'bot', m.content);
-      if (saved.offer) showOffer(saved.offer);
+      state.paying = saved.paying || null;
+      if (saved.unlocked) showUnlocked(saved.unlocked);
+      else if (saved.offer) showOffer(saved.offer);
+      // Back from PayPal (`?paid=1` from the return page): confirm right away —
+      // the person should not have to find and press a button to see the result.
+      const back = new URLSearchParams(location.search).get('paid') === '1';
+      if (back) history.replaceState(null, '', location.pathname);
+      if (back || state.paying) await checkAccess({ auto: true });
     } catch {
       forget(); // the saved date no longer works — start from the form
     }
@@ -186,9 +194,13 @@
     showError('#chat-error', '');
     try {
       const order = await postInSession('api/checkout', { kind: state.offer.kind, key: state.offer.key });
-      btn.textContent = 'Opened PayPal — come back after paying';
-      window.open(order.approve_url, '_blank', 'noopener');
-      addMessage('bot', 'PayPal is open in a new tab. When you are done, press "Check my access" and I will confirm what is unlocked.');
+      btn.textContent = 'Opening PayPal…';
+      // Same tab: PayPal returns the person here, and the conversation picks up
+      // where it stopped (saved above) with the purchase already confirmed.
+      state.paying = Object.assign({}, state.offer);
+      save();
+      location.href = order.approve_url;
+      return;
     } catch (err) {
       showError('#chat-error', err.message);
       btn.disabled = false;
@@ -198,29 +210,57 @@
     }
   });
 
-  // ---- what is unlocked ----
-  $('#status').addEventListener('click', async () => {
+  // ---- after payment: what was bought, opened in one click ----
+  function showUnlocked(rec) {
+    state.unlocked = rec;
+    showOffer(null);
+    const name = productLabel(rec);
+    $('#unlocked .offer-text').textContent = name + ' — unlocked';
+    $('#open-product').textContent = 'Open my ' + name;
+    $('#unlocked-email').textContent = state.email;
+    $('#unlocked').hidden = false;
+  }
+
+  function isUnlocked(s, rec) {
+    if (!rec || rec.kind === 'book') return !!s.book_access;
+    if (rec.kind === 'plan') return !!(s.tier && s.tier !== 'basic');
+    return !!(s.book_access || (s.tier && s.tier !== 'basic') || (s.addons && s.addons.length));
+  }
+
+  /** Ask the core what is open. `auto` — right after PayPal brought the person back. */
+  async function checkAccess({ auto } = {}) {
     if (state.busy) return;
     state.busy = true;
     const out = $('#status-text');
-    out.textContent = 'checking…';
+    out.textContent = auto ? 'confirming your payment…' : 'checking…';
     try {
-      const s = await postInSession('api/status', {});
-      const parts = [];
-      parts.push('plan: ' + s.tier);
-      parts.push(s.book_access ? 'Book of Gifts: unlocked' : 'Book of Gifts: not yet');
-      if (s.subscription_end) parts.push('until ' + new Date(s.subscription_end).toLocaleDateString());
-      out.textContent = parts.join(' · ');
-      if (s.book_access || (s.tier && s.tier !== 'basic')) {
-        addMessage('bot', 'Confirmed — your access is open. Open YupDar at yupdar.com with the same email and the reading is waiting for you.');
-        showOffer(null);
-        save();
+      let s = await postInSession('api/status', {});
+      const rec = state.paying || state.offer || state.unlocked;
+      // The capture can land a few seconds after the person is back: one more look.
+      if (auto && !isUnlocked(s, rec)) { await new Promise(r => setTimeout(r, 3000)); s = await postInSession('api/status', {}); }
+      out.textContent = '';
+      if (isUnlocked(s, rec)) {
+        const name = productLabel(rec || { kind: 'book', key: 'book' });
+        if (state.paying || !state.unlocked) {
+          const reply = 'Done — your payment went through and ' + name + ' is yours. Open it with the button below; sign in with the same email you gave me.';
+          addMessage('bot', reply);
+          state.history.push({ role: 'assistant', content: reply });
+        }
+        state.paying = null;
+        showUnlocked(rec || { kind: 'book', key: 'book' });
+      } else if (auto) {
+        addMessage('bot', 'PayPal is still confirming the payment. Give it a minute and press "Check my access" below.');
+      } else {
+        out.textContent = 'Nothing unlocked yet for ' + state.email + '.';
       }
+      save();
     } catch (err) {
       out.textContent = '';
       showError('#chat-error', err.message);
     } finally {
       state.busy = false;
     }
-  });
+  }
+
+  $('#status').addEventListener('click', () => checkAccess());
 })();

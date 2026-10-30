@@ -89,6 +89,7 @@ input::placeholder { color: var(--quiet); }
 }
 .offer-text { font-weight: 600; }
 .offer-note { font-size: 12px; }
+a.btn { display: block; text-align: center; text-decoration: none; }
 
 .composer { display: flex; gap: 8px; margin-top: 16px; }
 .composer input { flex: 1; min-width: 0; }

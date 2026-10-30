@@ -42,7 +42,14 @@
       <div id="offer" class="offer" hidden>
         <div class="offer-text"></div>
         <button id="pay" class="btn">Pay with PayPal</button>
-        <div class="offer-note muted">Sandbox checkout. You will come back here when PayPal is done.</div>
+        <div class="offer-note muted">Sandbox checkout. After paying, PayPal brings you straight back to this conversation.</div>
+      </div>
+
+      <!-- After payment: what was bought and how to open it — one obvious next step -->
+      <div id="unlocked" class="offer" hidden>
+        <div class="offer-text"></div>
+        <a id="open-product" class="btn" href="https://yupdar.com/login.html" target="_blank" rel="noopener"></a>
+        <div class="offer-note muted">Sign in to YupDar with Google using <b id="unlocked-email"></b> — everything you bought is already unlocked there.</div>
       </div>
 
       <form id="chat-form" class="composer">
