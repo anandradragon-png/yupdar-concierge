@@ -59,7 +59,7 @@ async function start(req, res) {
   const p = r.data;
   return res.json({
     session: s.id,
-    gift: { code: p.dar_code, name: p.name_ru, metaphor: p.metaphor_ru, essence: p.essence_en || p.essence_short_ru },
+    gift: { code: p.dar_code, name: p.name_en || p.name_ru, metaphor: p.archetype_en || p.metaphor_ru, essence: p.essence_en || p.essence_short_ru },
     catalog: p.catalog
   });
 }

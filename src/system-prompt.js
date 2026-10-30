@@ -33,7 +33,7 @@ function buildSystemPrompt(profile) {
 
 THE PERSON'S GIFT
 - Code: ${profile.dar_code}
-- Name (Russian): ${profile.name_ru}; metaphor: ${profile.metaphor_ru}
+- Name: ${profile.name_en || profile.name_ru}; archetype: ${profile.archetype_en || profile.metaphor_ru}
 - Essence: ${profile.essence_en || profile.essence_short_ru}
 - Light side: ${profile.light_en}
 - Shadow side: ${profile.shadow_en}
