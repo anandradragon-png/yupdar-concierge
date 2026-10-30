@@ -1,5 +1,5 @@
 /* YupDar Concierge — the page. No framework, no build step.
-   Talks only to this server's /api/*; the server talks to the core. */
+   Talks only to this server's api/* (relative, so it also works mounted under a path); the server talks to the core. */
 
 (function () {
   'use strict';
@@ -62,7 +62,7 @@
     const btn = e.target.querySelector('button');
     btn.disabled = true;
     try {
-      const data = await post('/api/start', { birth_date: fd.get('birth_date'), email: fd.get('email') });
+      const data = await post('api/start', { birth_date: fd.get('birth_date'), email: fd.get('email') });
       state.session = data.session;
       state.catalog = data.catalog;
       $('#gift .gift-code').textContent = 'GIFT ' + data.gift.code;
@@ -94,7 +94,7 @@
     input.value = '';
     const thinking = addMessage('bot', 'thinking…', 'thinking');
     try {
-      const data = await post('/api/chat', { session: state.session, message: text });
+      const data = await post('api/chat', { session: state.session, message: text });
       thinking.remove();
       addMessage('bot', data.reply);
       if (data.recommend) showOffer(data.recommend);
@@ -116,7 +116,7 @@
     btn.textContent = 'Creating the order…';
     showError('#chat-error', '');
     try {
-      const order = await post('/api/checkout', { session: state.session, kind: state.offer.kind, key: state.offer.key });
+      const order = await post('api/checkout', { session: state.session, kind: state.offer.kind, key: state.offer.key });
       btn.textContent = 'Opened PayPal — come back after paying';
       window.open(order.approve_url, '_blank', 'noopener');
       addMessage('bot', 'PayPal is open in a new tab. When you are done, press "Check my access" and I will confirm what is unlocked.');
@@ -136,7 +136,7 @@
     const out = $('#status-text');
     out.textContent = 'checking…';
     try {
-      const s = await post('/api/status', { session: state.session });
+      const s = await post('api/status', { session: state.session });
       const parts = [];
       parts.push('plan: ' + s.tier);
       parts.push(s.book_access ? 'Book of DARs: unlocked' : 'Book of DARs: not yet');
