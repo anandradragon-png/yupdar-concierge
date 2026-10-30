@@ -49,13 +49,30 @@ function parseReply(text, catalog) {
   return { reply: obj.reply.trim(), recommend: rec };
 }
 
+/**
+ * History the page brings back after the server forgot the session: only
+ * user/assistant turns, as text. Assistant turns are stored the way `chat`
+ * stores them (JSON), without a recommendation — a recommendation is only
+ * ever accepted from the model, never from the browser.
+ */
+function seedHistory(history) {
+  if (!Array.isArray(history)) return [];
+  return history
+    .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
+    .slice(-12)
+    .map(m => ({
+      role: m.role,
+      content: m.role === 'assistant' ? JSON.stringify({ reply: m.content.slice(0, 4000), recommend: null }) : m.content.slice(0, 4000)
+    }));
+}
+
 async function start(req, res) {
-  const { birth_date, email } = req.body || {};
+  const { birth_date, email, history } = req.body || {};
   const clean = String(email || '').trim().toLowerCase();
   if (!EMAIL_RE.test(clean)) return res.status(400).json({ error: 'A valid email is needed to unlock what you buy.' });
   const r = await core.profile(birth_date);
   if (!r.ok) return res.status(r.status).json({ error: r.error });
-  const s = sessions.create({ profile: r.data, email: clean });
+  const s = sessions.create({ profile: r.data, email: clean, messages: seedHistory(history) });
   const p = r.data;
   return res.json({
     session: s.id,
@@ -103,4 +120,4 @@ async function status(req, res) {
   return res.json(r.data);
 }
 
-module.exports = { start, chat, checkout, status, parseReply, catalogHas };
+module.exports = { start, chat, checkout, status, parseReply, catalogHas, seedHistory };

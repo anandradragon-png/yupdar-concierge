@@ -21,7 +21,7 @@
       <h1>Tell me when you were born</h1>
       <p class="muted">The Gift is computed from the date. Email is where your purchases unlock — nothing else is sent there.</p>
       <form id="start-form" class="form">
-        <label>Birth date <input type="date" name="birth_date" required></label>
+        <label>Birth date <input type="text" name="birth_date" inputmode="numeric" autocomplete="bday" placeholder="DD.MM.YYYY" maxlength="10" pattern="\d{2}\.\d{2}\.\d{4}" title="Day, month, year — for example 10.09.1977" required></label>
         <label>Email <input type="email" name="email" placeholder="you@example.com" required></label>
         <button type="submit" class="btn">Meet my Gift</button>
       </form>
