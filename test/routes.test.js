@@ -173,3 +173,20 @@ describe('system prompt — Yupik the mentor', () => {
     assert.doesNotMatch(thin, /undefined/);
   });
 });
+
+describe('system prompt — the language of the person\'s Gift', () => {
+  const { buildSystemPrompt } = require('../src/system-prompt');
+  const p = buildSystemPrompt({
+    dar_code: '1-6-7', name_en: 'Z-MAN', book_en: 'The Light Side: The Director of Processes. Active shadow — The Schemer.',
+    book_ru: 'Светлая часть — «Режиссёр процессов». Активная тень — «Интриган».',
+    catalog: { book: { key: 'book', name: 'B', description: 'd', usd: 9.99 }, plans: [], addons: [], free: null }
+  });
+  test('the Book chapter is in front of him, in both languages', () => {
+    assert.ok(p.includes('The Director of Processes'));
+    assert.ok(p.includes('«Режиссёр процессов»'));
+  });
+  test('one Gift per conversation, no mixing, and «дракончик» in Russian', () => {
+    assert.match(p, /Never mix Gifts/);
+    assert.match(p, /«дракончик» — never «дракон»/);
+  });
+});
