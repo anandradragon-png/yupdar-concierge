@@ -139,3 +139,37 @@ describe('system prompt — free path', () => {
     assert.match(p, /never put it in "recommend"/);
   });
 });
+
+describe('system prompt — Yupik the mentor', () => {
+  const { buildSystemPrompt } = require('../src/system-prompt');
+  const full = {
+    dar_code: '1-6-7', name_en: 'Z-MAN', archetype_en: 'The Screenwriter of Reality',
+    essence_en: 'The gift of time.', light_en: 'Slowing time.', shadow_en: 'Falling out of time. Correction: keep an anchor.',
+    activation_en: 'Stand barefoot and breathe.', meditation_en: 'Water Dragon of Time.', application_en: 'Feeling young.',
+    safety_en: 'Do not abuse slowing.', all_gifts: ['1-1-2 BRA-MA', '1-6-7 Z-MAN'],
+    catalog: { book: { key: 'book', name: 'B', description: 'd', usd: 9.99 }, plans: [], addons: [], free: null }
+  };
+  const p = buildSystemPrompt(full);
+
+  test('the Gift practices are in front of him — he can give value before selling', () => {
+    for (const t of ['Stand barefoot and breathe.', 'Water Dragon of Time.', 'Do not abuse slowing.']) assert.ok(p.includes(t), t);
+    assert.match(p, /offer ONE small practice/);
+  });
+  test('he knows the whole system, not only this Gift', () => {
+    assert.match(p, /ALL 64 GIFTS/);
+    assert.ok(p.includes('1-1-2 BRA-MA'));
+  });
+  test('ethics are explicit: no fate, no diagnosis, crisis means care and no selling', () => {
+    assert.match(p, /never fate/);
+    assert.match(p, /No diagnosis/);
+    assert.match(p, /suicide/);
+    assert.match(p, /do not recommend any product anywhere in that conversation/);
+  });
+  test('selling comes only after help', () => {
+    assert.match(p, /Only when you have helped/);
+  });
+  test('a sparse profile (old core) still builds a prompt without "undefined"', () => {
+    const thin = buildSystemPrompt({ dar_code: '1-6-7', catalog: full.catalog });
+    assert.doesNotMatch(thin, /undefined/);
+  });
+});
