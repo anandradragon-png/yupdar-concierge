@@ -1,6 +1,6 @@
-# YupDar Concierge
+# YupDar Gift Guide
 
-An AI concierge for [YupDar](https://yupdar.com), an app built on the system of 64 Gifts (DARs).
+**Yupik**, the Gift Guide of [YupDar](https://yupdar.com) — a little dragon who knows all 64 Gifts. YupDar is an app built on the system of 64 Gifts.
 You give it your birth date; it shows your Gift, talks with you about what is going on in your
 life, finds the one reading that answers it — and sells it right there, with PayPal, without
 leaving the conversation. After payment it confirms what was unlocked.
@@ -12,7 +12,7 @@ OpenAI-compatible chat completions API — **DeepSeek** in the live demo; paymen
 ## How it works
 
 ```
-browser ──► concierge (this repo) ──► LLM API, OpenAI-compatible  (the conversation)
+browser ──► Gift Guide (this repo) ──► LLM API, OpenAI-compatible  (the conversation)
                  │
                  └──────────────────► YupDar core, POST /api/concierge  (closed source)
                                         profile   birth date → Gift + catalog with live USD prices

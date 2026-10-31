@@ -1,4 +1,4 @@
-/* YupDar Concierge — the page. No framework, no build step.
+/* YupDar Gift Guide (Yupik) — the page. No framework, no build step.
    Talks only to this server's api/* (relative, so it also works mounted under a path); the server talks to the core. */
 
 (function () {
@@ -47,13 +47,22 @@
     el.hidden = !text;
   }
 
+  /** A message bubble; Yupik's ones carry his little face. Returns what to remove later. */
   function addMessage(role, text, extraClass) {
     const div = document.createElement('div');
     div.className = 'msg ' + role + (extraClass ? ' ' + extraClass : '');
     div.textContent = text;
-    $('#log').appendChild(div);
+    let node = div;
+    if (role === 'bot') {
+      node = document.createElement('div');
+      node.className = 'msg-row';
+      const face = document.createElement('img');
+      face.className = 'ava'; face.src = 'img/yupik-mini.png'; face.alt = ''; face.width = 40; face.height = 48;
+      node.append(face, div);
+    }
+    $('#log').appendChild(node);
     $('#log').scrollTop = $('#log').scrollHeight;
-    return div;
+    return node;
   }
 
   function productLabel(rec) {
@@ -76,7 +85,7 @@
     box.hidden = false;
   }
 
-  const GREETING = 'This is your Gift. Tell me what is on your mind these days — work, people, energy, a decision — and I will show how your Gift plays into it, and whether there is a reading worth opening for you.';
+  const GREETING = 'Here it is — your Gift! Tell me what is on your mind these days: work, people, energy, a decision. I\'ll show you how your Gift plays into it, and whether there is a reading worth opening for you.';
 
   /** New server session for the same person, carrying the conversation so far. */
   async function openSession() {

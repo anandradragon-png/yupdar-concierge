@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>YupDar Concierge</title>
-  <meta name="description" content="An AI concierge that explains your Gift, finds the reading you need and sells it with PayPal — in one conversation.">
+  <title>YupDar Gift Guide</title>
+  <meta name="description" content="Yupik, the YupDar Gift Guide: explains your Gift, finds the reading you need and sells it with PayPal — in one conversation.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/chat.css">
@@ -12,14 +12,17 @@
 <body>
   <main class="shell">
     <header class="top">
-      <div class="brand">YupDar <span>Concierge</span></div>
+      <div class="brand">YupDar <span>Gift Guide</span></div>
       <div class="sub">Your Gift, explained. The reading you need, found and unlocked — in one chat.</div>
     </header>
 
     <!-- Step 1: who are we talking to -->
     <section id="start" class="card">
-      <h1>Tell me when you were born</h1>
-      <p class="muted">The Gift is computed from the date. Email is where your purchases unlock — nothing else is sent there.</p>
+      <div class="yupik-hello">
+        <img src="img/yupik.png" alt="Yupik, a little white-and-gold dragon" width="280" height="275">
+        <h1>Hi, I'm <span class="gold">Yupik</span></h1>
+      </div>
+      <p class="muted">A little dragon who knows all 64 Gifts. Tell me when you were born — I'll show you yours, and we'll see what it says about your life right now. Email is where your purchases unlock — nothing else is sent there.</p>
       <form id="start-form" class="form">
         <label>Birth date <input type="text" name="birth_date" inputmode="numeric" autocomplete="bday" placeholder="DD.MM.YYYY" maxlength="10" pattern="\d{2}\.\d{2}\.\d{4}" title="Day, month, year — for example 10.09.1977" required></label>
         <label>Email <input type="email" name="email" placeholder="you@example.com" required></label>
@@ -61,7 +64,7 @@
       </div>
 
       <form id="chat-form" class="composer">
-        <input id="message" type="text" autocomplete="off" placeholder="What is on your mind right now?" maxlength="1500" required>
+        <input id="message" type="text" autocomplete="off" placeholder="Tell Yupik what is on your mind" maxlength="1500" required>
         <button type="submit" class="btn">Send</button>
       </form>
 
@@ -73,7 +76,7 @@
       <div id="chat-error" class="error" hidden></div>
     </section>
 
-    <footer class="foot muted">AI concierge · PayPal Orders v2 · <a href="https://yupdar.com" rel="noopener">yupdar.com</a></footer>
+    <footer class="foot muted">YupDar Gift Guide · PayPal Orders v2 · <a href="https://yupdar.com" rel="noopener">yupdar.com</a></footer>
   </main>
   <script src="js/chat.js"></script>
 </body>

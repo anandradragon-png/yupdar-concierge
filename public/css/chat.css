@@ -1,4 +1,4 @@
-/* YupDar Concierge — dark premium with gold (the YupDar canon: Manrope,
+/* YupDar Gift Guide — dark premium with gold (the YupDar canon: Manrope,
    #080808, gold #D4AF37 → #C5A028 → #9A7B1A, warm greys, gold shadows). */
 
 :root {
@@ -80,6 +80,13 @@ input::placeholder { color: var(--quiet); }
 .msg.user { justify-self: end; background: rgba(212,175,55,0.12); border: 1px solid var(--border); }
 .msg.bot { justify-self: start; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); }
 .msg.thinking { color: var(--quiet); font-style: italic; }
+/* Yupik: his face next to his messages, and on the first screen */
+.msg-row { display: flex; gap: 8px; align-items: flex-end; justify-self: start; max-width: 92%; }
+.msg-row .msg { max-width: none; }
+.ava { width: 40px; height: auto; flex: none; filter: drop-shadow(0 4px 10px rgba(212,175,55,0.15)); } /* the whole little Yupik, not a cropped face */
+.yupik-hello { display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center; margin-bottom: 8px; }
+.yupik-hello img { width: 280px; max-width: 80%; height: auto; filter: drop-shadow(0 8px 25px rgba(212,175,55,0.15)); }
+.yupik-hello h1 { margin: 0; }
 
 .offer {
   margin-top: 16px; padding: 16px;
@@ -92,8 +99,10 @@ input::placeholder { color: var(--quiet); }
 /* `display: grid` above beats the browser's own [hidden] rule — without this
    the pay button showed before any recommendation and an empty panel after. */
 [hidden] { display: none !important; }
+.gold { color: var(--gold); }
 .consent { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; color: var(--muted, #a09080); }
 .consent input { margin-top: 3px; accent-color: #D4AF37; }
+.consent a { color: var(--gold); }
 .tools { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
 a.btn { display: block; text-align: center; text-decoration: none; }
 

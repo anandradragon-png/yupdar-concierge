@@ -1,7 +1,7 @@
 {
   "name": "yupdar-concierge",
   "version": "0.1.0",
-  "description": "AI concierge for YupDar: explains your Gift, recommends a reading and sells it with PayPal — in one conversation. Any OpenAI-compatible LLM (DeepSeek by default).",
+  "description": "YupDar Gift Guide (Yupik): explains your Gift, recommends a reading and sells it with PayPal — in one conversation. Any OpenAI-compatible LLM (DeepSeek by default).",
   "license": "MIT",
   "private": false,
   "main": "server.js",
